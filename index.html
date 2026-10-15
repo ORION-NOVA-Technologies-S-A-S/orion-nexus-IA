@@ -524,7 +524,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
       <article class="plan">
         <h3>Asistente</h3>
         <p class="for">Para negocios que quieren atender mejor por chat.</p>
-        <p class="price">[TU PRECIO] <small>/ mes</small></p>
+        <p class="price">$120.000<span class="cop">COP</span> <small>/ mes</small></p>
         <ul>
           <li>1 asistente virtual con IA</li>
           <li>En WhatsApp o en tu página web</li>
@@ -535,7 +535,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
       <article class="plan featured">
         <div class="top-row"><h3>Negocio</h3><span class="badge">RECOMENDADO</span></div>
         <p class="for">Para negocios que quieren vender y ahorrar tiempo.</p>
-        <p class="price">[TU PRECIO] <small>/ mes</small></p>
+        <p class="price">$280.000<span class="cop">COP</span> <small>/ mes</small></p>
         <ul>
           <li>Todo lo del plan Asistente</li>
           <li>WhatsApp y página web a la vez</li>
@@ -545,15 +545,15 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
         <a class="btn btn-primary" href="#contacto" data-plan="Negocio">Elegir Negocio</a>
       </article>
       <article class="plan">
-        <h3>Empresa</h3>
+        <h3>Empresarial</h3>
         <p class="for">Para empresas con varios procesos o sistemas.</p>
-        <p class="price">[TU PRECIO] <small>/ mes</small></p>
+        <p class="price">$500.000<span class="cop">COP</span> <small>/ mes</small></p>
         <ul>
           <li>Todo lo del plan Negocio</li>
           <li>Análisis de datos con IA</li>
           <li>Integración con tus sistemas</li>
         </ul>
-        <a class="btn btn-ghost" href="#contacto" data-plan="Empresa">Elegir Empresa</a>
+        <a class="btn btn-ghost" href="#contacto" data-plan="Empresarial">Elegir Empresarial</a>
       </article>
     </div>
     <p class="plans-note">¿No sabes cuál elegir? <button class="btn btn-ghost" type="button" data-open-chat data-ask="¿Qué plan me conviene?" style="min-height:40px;padding:.4em 1em;margin-left:6px">Pregúntale a NOVA</button></p>
@@ -577,9 +577,9 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
         <div class="field"><label for="f-plan">Plan de interés</label>
           <select id="f-plan" name="plan">
             <option value="Aún no sé">Aún no sé</option>
-            <option value="Asistente">Asistente</option>
-            <option value="Negocio">Negocio</option>
-            <option value="Empresa">Empresa</option>
+            <option value="Asistente">Asistente · $120.000/mes</option>
+            <option value="Negocio">Negocio · $280.000/mes</option>
+            <option value="Empresarial">Empresarial · $500.000/mes</option>
           </select>
         </div>
         <div class="field"><label for="f-mensaje">¿Qué te gustaría que haga la IA?</label><textarea id="f-mensaje" name="mensaje" rows="4" placeholder="Responder WhatsApp, tomar pedidos, agendar citas…"></textarea></div>
@@ -733,7 +733,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
     VOICE.voices.forEach(v=>{ const l=v.lang.replace("_","-").toLowerCase(); let s=l==="es-co"?30:l==="es-mx"?26:l==="es-us"?24:l==="es-419"?22:12;
       if(nv&&v.name===nv.name) s-=25; if(/natural|neural|online/i.test(v.name)) s+=8; if(s>bs){ bs=s; best=v; } });
     return best||nv; }
-  function speakable(t){ return String(t).replace(/https?:\/\/\S+/g,"").replace(/300 444 0009/g,"tres cero cero, cuatro cuatro cuatro, cero cero cero nueve").replace(/\bIA\b/g,"I A").replace(/[•·→|]/g,",").replace(/\s+/g," ").trim(); }
+  function speakable(t){ return String(t).replace(/https?:\/\/\S+/g,"").replace(/300 444 0009/g,"tres cero cero, cuatro cuatro cuatro, cero cero cero nueve").replace(/\$\s?(\d{1,3})\.000/g,"$1 mil pesos").replace(/\bIA\b/g,"I A").replace(/[•·→|]/g,",").replace(/\s+/g," ").trim(); }
   let tok=0;
   function stopSpeech(){ tok++; try{ if(hasTTS()) speechSynthesis.cancel(); }catch(e){} setTalking(false,"nova"); setTalking(false,"ori"); }
   function speak(text,who){
@@ -803,11 +803,14 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
   const toForm={label:"Cotizar mi IA",go:"#contacto"};
   const toCaso={label:"Ver caso real",go:"#caso"};
   const R=[
-    {k:/(que plan|cual plan|me conviene|recomiend)/, a:()=>["Depende de lo que necesites:\n• Solo quieres atender mejor por chat → plan Asistente.\n• Quieres vender más y que los pedidos o citas se hagan solos → plan Negocio. Es el que más recomiendo.\n• Tienes varios procesos o sistemas para conectar → plan Empresa.\nCuéntame qué hace tu negocio y te digo cuál te sirve.",[toPlanes,toForm]]},
-    {k:/(precio|plan|cuesta|cuanto|valor|tarifa|cobran|costo)/, a:()=>["Tenemos tres planes mensuales: Asistente, Negocio y Empresa. El valor depende de cuántos canales y procesos quieras automatizar, así que te lo damos en una cotización sin compromiso.",[toPlanes,toForm]]},
+    {k:/(que plan|cual plan|me conviene|recomiend)/, a:()=>["Depende de lo que necesites:\n• Solo quieres atender mejor por chat → plan Asistente, $120.000 al mes.\n• Quieres vender más y que los pedidos o citas se hagan solos → plan Negocio, $280.000 al mes. Es el que más recomiendo.\n• Tienes varios procesos o sistemas para conectar → plan Empresarial, $500.000 al mes.\nCuéntame qué hace tu negocio y te digo cuál te sirve.",[toPlanes,toForm]]},
+    {k:/\basistente\b.*(plan|precio|cuesta|incluye)|plan asistente/, a:()=>["El plan Asistente cuesta $120.000 al mes. Incluye 1 asistente virtual con IA, en WhatsApp o en tu página web, entrenado con tu información.",[toForm]]},
+    {k:/plan negocio|\bnegocio\b.*(plan|precio|cuesta|incluye)/, a:()=>["El plan Negocio cuesta $280.000 al mes. Incluye todo lo del plan Asistente, WhatsApp y página web a la vez, automatización de pedidos o citas y un reporte mensual de conversaciones.",[toForm]]},
+    {k:/empresarial/, a:()=>["El plan Empresarial cuesta $500.000 al mes. Incluye todo lo del plan Negocio, análisis de datos con IA e integración con tus sistemas.",[toForm]]},
+    {k:/(precio|plan|cuesta|cuanto|valor|tarifa|cobran|costo)/, a:()=>["Tenemos tres planes por suscripción mensual:\n• Asistente: $120.000\n• Negocio: $280.000 (recomendado)\n• Empresarial: $500.000\nTodos en pesos colombianos. ¿Quieres que te cuente qué incluye cada uno?",[toPlanes,toForm]]},
     {k:/(whatsapp|chatbot|bot\b|asistente virtual|instagram|atender clientes|atencion)/, a:()=>["Creamos asistentes con IA para WhatsApp, tu página web e Instagram. Los entrenamos con tus productos, precios y horarios, y responden a tus clientes a cualquier hora, incluso de madrugada. Si una pregunta es muy especial, se la pasan a una persona de tu equipo.",[toForm]]},
     {k:/(automatiz|tarea|repetitiv|proceso|pedido|cita|agenda|recordatorio|cotizacion|factura)/, a:()=>["Automatizamos lo que hoy haces a mano una y otra vez: tomar pedidos, agendar y recordar citas, enviar cotizaciones y correos, y anotar todo en tu sistema. Así tu equipo se dedica a lo que de verdad necesita una persona.",[toForm]]},
-    {k:/(dato|reporte|venta|analisis|analitic|estadistic|excel|numeros)/, a:()=>["Con el análisis de datos con IA tienes reportes claros de tus ventas y clientes. Y le puedes preguntar en español, por ejemplo: ¿qué producto se vendió más este mes?, y te responde con tus propios números. Viene en el plan Empresa."]},
+    {k:/(dato|reporte|venta|analisis|analitic|estadistic|excel|numeros)/, a:()=>["Con el análisis de datos con IA tienes reportes claros de tus ventas y clientes. Y le puedes preguntar en español, por ejemplo: ¿qué producto se vendió más este mes?, y te responde con tus propios números. Viene en el plan Empresarial."]},
     {k:/(medida|integra|conectar|sistema|base de datos|api|software)/, a:()=>["Hacemos IA a la medida: conectamos el asistente con tus sistemas, bases de datos y aplicaciones, para que consulte y registre información real de tu negocio. Nada de plantillas genéricas.",[toForm]]},
     {k:/(nova flow|restaurante|caso|ejemplo|portafolio)/, a:()=>["Un ejemplo real es NOVA FLOW IA, el asistente de NOVA Restaurantes, una plataforma propia de Orion Nova en Neiva. Muestra la carta real del restaurante, ofrece bebidas y acompañantes, arma el pedido con sus precios y se lo envía al dueño.",[toCaso]]},
     {k:/(como funciona|pasos|como empiezo|empezar|implementa)/, a:()=>["Son tres pasos:\n1. Entendemos tu negocio y qué te quita tiempo.\n2. Entrenamos tu asistente con tu información.\n3. Lo conectamos a WhatsApp o tu web y lo mejoramos cada mes.",[toForm]]},
