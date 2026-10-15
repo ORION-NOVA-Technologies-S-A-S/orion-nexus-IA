@@ -253,9 +253,14 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
 .hero h1 span{background:linear-gradient(90deg,var(--blue),var(--cyan-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn-nova{background:transparent;border:1px solid var(--cyan);color:var(--fg)}
 .btn-nova:hover{background:rgba(6,182,212,.12);color:#fff}
-.stage.nexus{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center}
+.stage.nexus{grid-template-columns:minmax(0,1fr);align-items:center}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:end}
+.duo .character svg{max-width:210px}
+.duo .bubble{font-size:.84rem}
+.demo{grid-template-columns:minmax(0,1fr)}
 .character.nova .bubble{border-color:rgba(6,182,212,.5)}
 .character.nova .bubble::after{border-color:rgba(6,182,212,.5)}
+.quick button.ori-chip{border-color:rgba(245,181,68,.45)}
 .character.nova .bubble b{color:var(--cyan-2)}
 .nova-arm{transform-box:view-box;transform-origin:72px 214px;animation:var(--wave,none)}
 .character.wave{--wave:wave .9s ease-in-out 2}
@@ -427,11 +432,18 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
 
     <div class="stage nexus">
       <span class="tag-c">Asistente · ejemplo</span>
+      <div class="duo">
       <button class="character nova" id="heroNova" type="button" aria-label="NOVA, el asistente de inteligencia artificial. Tócalo para saludar">
         <span class="bubble" id="novaSay" aria-live="polite">¡Hola! Soy <b>NOVA</b>. Tócame y te cuento qué puede hacer la IA por tu negocio.</span>
         <svg viewBox="0 0 260 340" role="img" aria-label="NOVA, el humanoide de Orion Nova"><use href="#nova"/></svg>
         <span class="tag">NOVA · inteligencia artificial</span>
       </button>
+      <button class="character ori-host" id="heroOri" type="button" aria-label="ORI, el búho de seguridad. Tócalo para un consejo">
+        <span class="bubble" id="oriSay" aria-live="polite">Y yo soy <b>ORI</b>. Cuido que tus datos y tu IA estén seguros. ¡Tócame!</span>
+        <svg viewBox="0 0 260 340" role="img" aria-label="ORI, el búho de Orion Nova"><use href="#ori"/></svg>
+        <span class="tag">ORI · seguridad</span>
+      </button>
+      </div>
       <div class="demo" aria-label="Ejemplo de conversación de un asistente">
         <span class="lbl">WhatsApp de tu negocio · 11:42 p. m.</span>
         <p class="q">Hola, ¿todavía atienden? Quiero pedir para mañana.</p>
@@ -680,6 +692,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
     <button type="button">Chatbot para WhatsApp</button>
     <button type="button">Automatizar tareas</button>
     <button type="button">¿Cómo funciona?</button>
+    <button type="button" class="ori-chip">Consejo de seguridad de ORI</button>
     <button type="button">Hablar con un asesor</button>
   </div>
   <form id="chatForm" autocomplete="off">
@@ -719,32 +732,65 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
       if(/female|mujer|sabina|dalia|paola|salom[eé]|helena|m[oó]nica|laura|elvira|paulina|marisol|lupe|conchita|penelope|ximena|camila|valentina/i.test(v.name)) s-=8;
       if(s>bs){ bs=s; best=v; } }); return best; }
   function setState(t,busy){ const st=$("#chatState"); st.classList.toggle("busy",!!busy); st.lastChild.textContent=t; }
-  function setTalking(on){ avSet("talk",on); $("#heroNova").classList.toggle("talking",on); setState(on?"Hablando…":"En línea",on); }
+  function setTalking(on,who){
+    if(who==="ori") $$(".ori-host").forEach(h=>h.classList.toggle("ori-talking",on));
+    else { avSet("talk",on); $("#heroNova").classList.toggle("talking",on); }
+    setState(on?(who==="ori"?"ORI está hablando…":"Hablando…"):"En línea",on); }
+  /* ORI tiene su propia voz: más aguda y ágil, y otra voz si el navegador la tiene */
+  function pickOriVoice(){ const nv=pickVoice(); let best=null,bs=-1e9;
+    VOICE.voices.forEach(v=>{ const l=v.lang.replace("_","-").toLowerCase(); let s=l==="es-co"?30:l==="es-mx"?26:l==="es-us"?24:l==="es-419"?22:12;
+      if(nv&&v.name===nv.name) s-=25; if(/natural|neural|online/i.test(v.name)) s+=8; if(s>bs){ bs=s; best=v; } });
+    return best||nv; }
   function speakable(t){ return String(t).replace(/https?:\/\/\S+/g,"").replace(/300 444 0009/g,"tres cero cero, cuatro cuatro cuatro, cero cero cero nueve").replace(/\bIA\b/g,"I A").replace(/[•·→|]/g,",").replace(/\s+/g," ").trim(); }
   let tok=0;
-  function stopSpeech(){ tok++; try{ if(hasTTS()) speechSynthesis.cancel(); }catch(e){} setTalking(false); }
-  function speak(text){
+  function stopSpeech(){ tok++; try{ if(hasTTS()) speechSynthesis.cancel(); }catch(e){} setTalking(false,"nova"); setTalking(false,"ori"); }
+  function speak(text,who){
+    who=who==="ori"?"ori":"nova";
     const my=++tok;
-    if(!VOICE.on||!hasTTS()||!VOICE.voices.length){ setTalking(true); setTimeout(()=>{ if(my===tok) setTalking(false); },Math.min(2800,400+String(text).length*28)); return; }
-    const parts=speakable(text).match(/[^.!?¿¡\n]+[.!?]?/g)||[], v=pickVoice(); let i=0;
+    setTalking(false,who==="ori"?"nova":"ori");
+    if(!VOICE.on||!hasTTS()||!VOICE.voices.length){ setTalking(true,who); setTimeout(()=>{ if(my===tok) setTalking(false,who); },Math.min(2800,400+String(text).length*28)); return; }
+    const parts=speakable(text).match(/[^.!?¿¡\n]+[.!?]?/g)||[], v=who==="ori"?pickOriVoice():pickVoice(); let i=0;
     try{ speechSynthesis.cancel(); }catch(e){}
     (function next(){
-      if(my!==tok||i>=parts.length){ if(my===tok) setTalking(false); return; }
+      if(my!==tok||i>=parts.length){ if(my===tok) setTalking(false,who); return; }
       const s=parts[i++].trim(); if(s.length<2) return next();
       const u=new SpeechSynthesisUtterance(s); if(v){ u.voice=v; u.lang=v.lang; } else u.lang="es-CO";
-      u.rate=1.02; u.pitch=.95;
-      let ok=false; const guard=setTimeout(()=>{ if(!ok) setTalking(false); },2500);
-      u.onstart=()=>{ ok=true; clearTimeout(guard); setTalking(true); };
+      if(who==="ori"){ u.rate=1.08; u.pitch=1.45; } else { u.rate=1.02; u.pitch=.95; }
+      let ok=false; const guard=setTimeout(()=>{ if(!ok) setTalking(false,who); },2500);
+      u.onstart=()=>{ ok=true; clearTimeout(guard); setTalking(true,who); };
       u.onend=()=>{ clearTimeout(guard); next(); };
-      u.onerror=()=>{ clearTimeout(guard); if(my===tok) setTalking(false); };
+      u.onerror=()=>{ clearTimeout(guard); if(my===tok) setTalking(false,who); };
       try{ speechSynthesis.speak(u); }catch(e){ clearTimeout(guard); }
     })();
   }
   const ICO_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
   const ICO_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l6 6M22 9l-6 6"/></svg>';
   function paintVoice(){ const b=$("#voiceBtn"); if(!hasTTS()){ b.hidden=true; return; } b.innerHTML=VOICE.on?ICO_ON:ICO_OFF; b.setAttribute("aria-pressed",String(VOICE.on)); const l=VOICE.on?"Silenciar la voz de NOVA":"Activar la voz de NOVA"; b.setAttribute("aria-label",l); b.title=l; }
-  $("#voiceBtn").addEventListener("click",()=>{ VOICE.on=!VOICE.on; try{ localStorage.setItem("orion.nova.voz",VOICE.on?"on":"off"); }catch(e){} if(!VOICE.on) stopSpeech(); else speak("Listo, vuelvo a hablar."); paintVoice(); });
+  $("#voiceBtn").addEventListener("click",()=>{ VOICE.on=!VOICE.on; try{ localStorage.setItem("orion.nova.voz",VOICE.on?"on":"off"); }catch(e){} if(!VOICE.on) stopSpeech(); else speak("Listo, vuelvo a hablar.","nova"); paintVoice(); });
   paintVoice();
+
+  /* ---------- ORI con vida: mirada, pico, alas y cejas ---------- */
+  function oriDo(act){
+    const cls={flap:"ori-flap",scan:"ori-scan",alert:"ori-alert",tilt:"tilt"}[act]; if(!cls) return;
+    $$(".ori-host").forEach(h=>{ h.classList.remove(cls); void h.getBoundingClientRect(); h.classList.add(cls);
+      clearTimeout(h["_t"+act]); h["_t"+act]=setTimeout(()=>h.classList.remove(cls),act==="flap"?1400:act==="tilt"?900:2600); });
+  }
+  addEventListener("pointermove",e=>{ $$(".ori-host").forEach(h=>{ const r=h.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
+    const dx=(e.clientX-(r.left+r.width/2))/innerWidth, dy=(e.clientY-(r.top+r.height*.35))/innerHeight;
+    h.style.setProperty("--ox",Math.max(-1,Math.min(1,dx*2.6)).toFixed(2)); h.style.setProperty("--oy",Math.max(-1,Math.min(1,dy*2.6)).toFixed(2)); }); },{passive:true});
+  if(!reduced) (function idle(){ setTimeout(()=>{ if(!document.hidden){ const a=["scan","flap","alert","look"][Math.floor(Math.random()*4)];
+      if(a==="look"){ const x=(Math.random()*2-1).toFixed(2), y=(Math.random()*1.2-.6).toFixed(2); $$(".ori-host").forEach(h=>{ h.style.setProperty("--ox",x); h.style.setProperty("--oy",y); }); } else oriDo(a); }
+    idle(); },6000+Math.random()*5000); })();
+  const tips=[
+    "Antes de conectar un asistente de IA a tu WhatsApp, activa la verificación en dos pasos en esa cuenta.",
+    "No le pidas a ningún chatbot tus contraseñas ni datos de tarjetas. Un asistente serio nunca los necesita.",
+    "Da acceso a la IA solo a los datos que de verdad necesita. Menos datos expuestos, menos riesgo.",
+    "Usa una contraseña distinta para cada cuenta. Si una se filtra, las demás siguen protegidas.",
+    "Desconfía de los mensajes que piden tus datos con urgencia. Así empiezan muchos fraudes.",
+    "Haz copias de seguridad de la información de tu negocio y guarda una fuera de tu computador."
+  ];
+  let ti=-1; const nextTip=()=>tips[ti=(ti+1)%tips.length];
+  $("#heroOri").addEventListener("click",()=>{ const t=nextTip(); $("#oriSay").innerHTML="<b>Consejo:</b> "+t; oriDo("tilt"); oriDo("flap"); speak(t,"ori"); });
 
   /* ---------- NOVA en el héroe: ideas de IA para negocios ---------- */
   const ideas=[
@@ -755,7 +801,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
     "Las cotizaciones repetitivas se pueden armar solas y llegar al correo del cliente en minutos."
   ];
   let ii=-1; const nextIdea=()=>ideas[ii=(ii+1)%ideas.length];
-  $("#heroNova").addEventListener("click",()=>{ const t=nextIdea(); $("#novaSay").innerHTML="<b>Idea:</b> "+t; wave(); speak(t); });
+  $("#heroNova").addEventListener("click",()=>{ const t=nextIdea(); $("#novaSay").innerHTML="<b>Idea:</b> "+t; wave(); speak(t,"nova"); });
 
   /* ---------- cerebro de NOVA: respuestas sobre ORION NEXUS IA ---------- */
   const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[¿?¡!.,;:]/g," ");
@@ -775,7 +821,9 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
     {k:/(como funciona|pasos|como empiezo|empezar|implementa)/, a:()=>["Son tres pasos:\n1. Entendemos tu negocio y qué te quita tiempo.\n2. Entrenamos tu asistente con tu información.\n3. Lo conectamos a WhatsApp o tu web y lo mejoramos cada mes.",[toForm]]},
     {k:/(cuanto tiempo|cuanto se demora|demora|tarda|rapido|cuando estaria)/, a:()=>["El tiempo depende de qué tan grande sea lo que quieres automatizar. Cuando conozcamos tu negocio te damos una fecha clara en la cotización.",[toForm]]},
     {k:/(reemplaz|quitar emplead|despedir|trabajo de)/, a:()=>["La idea no es reemplazar a tu equipo, sino quitarle lo repetitivo. La IA responde lo de siempre y tu gente se dedica a vender, atender casos especiales y hacer crecer el negocio."]},
-    {k:/(segur|privacidad|mis datos|hack|proteg)/, a:()=>["Tus datos se tratan según la Ley 1581 de 2012 y solo los ve tu negocio. Y si quieres protección completa, la combinamos con ORION CORE, nuestra línea de ciberseguridad.",[{label:"Conocer ORION CORE",href:"https://orion-nova-technologies-s-a-s.github.io/orion-core/"}]]},
+    {k:/(consejo|tip\b)/, who:"ori", a:()=>["Consejo de seguridad: "+nextTip()]},
+    {k:/(\bori\b|buho)/, who:"ori", a:()=>["Soy ORI, el búho guardián de Orion Nova. Mientras NOVA te ayuda con la inteligencia artificial, yo cuido que tus datos y tu asistente estén seguros. Los búhos vemos en la oscuridad lo que otros no ven."]},
+    {k:/(segur|privacidad|mis datos|hack|proteg)/, who:"ori", a:()=>["Tus datos se tratan según la Ley 1581 de 2012 y solo los ve tu negocio. Y si quieres protección completa, la combinamos con ORION CORE, nuestra línea de ciberseguridad.",[{label:"Conocer ORION CORE",href:"https://orion-nova-technologies-s-a-s.github.io/orion-core/"}]]},
     {k:/(que puede hacer|que hace la ia|que es|servicio|que ofrecen|que hacen|nexus|para mi negocio)/, a:()=>["ORION NEXUS IA pone la inteligencia artificial a trabajar en tu negocio de cuatro formas:\n• Asistentes virtuales para WhatsApp y tu web\n• Automatización de procesos\n• Análisis de datos con IA\n• IA a la medida, conectada a tus sistemas",[toPlanes,toForm]]},
     {k:/(asesor|humano|persona|telefono|celular|llamar|contacto|correo|email|hablar con)/, a:()=>["Con gusto. Escríbenos por WhatsApp al +57 300 444 0009 o al correo "+MAIL+". Estamos en Neiva, Huila, y atendemos negocios de todo el país.",[toAsesor,{label:"Enviar correo",href:"mailto:"+MAIL+"?subject="+encodeURIComponent("Información ORION NEXUS IA")}]]},
     {k:/(quien eres|como te llamas|eres un|eres una|\bnova\b)/, a:()=>["Soy NOVA, el humanoide de Orion Nova Technologies. Soy un ejemplo de lo que hacemos: un asistente que conversa, explica y te ayuda a encontrar lo que necesitas."]},
@@ -783,7 +831,7 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
     {k:/(gracias|listo|perfecto|genial|vale\b|ok\b)/, a:()=>["¡Con gusto! Aquí sigo. Si quieres, cuéntame de tu negocio y te doy una idea de cómo usar la IA."]}
   ];
   function answer(q){ const n=" "+norm(q)+" ";
-    for(const r of R){ if(r.k.test(n)){ const [txt,acts]=r.a(); return {txt,acts}; } }
+    for(const r of R){ if(r.k.test(n)){ const [txt,acts]=r.a(); return {txt,acts,who:r.who||"nova"}; } }
     return {txt:"Buena pregunta. Esa todavía no la tengo clara. Puedo contarte qué puede hacer la IA por tu negocio, los planes, cómo funciona, o pasarte con un asesor.",acts:[toPlanes,toAsesor]}; }
 
   /* ---------- chat ---------- */
@@ -798,13 +846,14 @@ footer .slogan{font-family:var(--f-mono);letter-spacing:.08em;font-size:.8rem}
       m.appendChild(box); }
     msgs.appendChild(m); msgs.scrollTop=msgs.scrollHeight;
   }
-  function novaReply(text,acts){
+  function novaReply(text,acts,who){
+    who=who==="ori"?"ori":"nova";
     clearTimeout(busy);
-    const t=document.createElement("div"); t.className="typing nova"; t.innerHTML="<i></i><i></i><i></i>"; msgs.appendChild(t); msgs.scrollTop=msgs.scrollHeight;
-    setState("Pensando…",true); avSet("think",true);
-    busy=setTimeout(()=>{ t.remove(); avSet("think",false); add("nova",text,acts); speak(text); },reduced?150:650+Math.min(900,text.length*4));
+    const t=document.createElement("div"); t.className="typing"+(who==="nova"?" nova":""); t.innerHTML="<i></i><i></i><i></i>"; msgs.appendChild(t); msgs.scrollTop=msgs.scrollHeight;
+    setState(who==="ori"?"ORI está revisando…":"Pensando…",true); if(who==="ori") oriDo("scan"); else avSet("think",true);
+    busy=setTimeout(()=>{ t.remove(); avSet("think",false); add(who,text,acts); if(who==="ori") oriDo("flap"); speak(text,who); },reduced?150:650+Math.min(900,text.length*4));
   }
-  function ask(q){ q=String(q||"").trim(); if(!q) return; add("me",q); const r=answer(q); novaReply(r.txt,r.acts); }
+  function ask(q){ q=String(q||"").trim(); if(!q) return; add("me",q); const r=answer(q); novaReply(r.txt,r.acts,r.who); }
   function openChat(firstQ){
     $("#chat").hidden=false; $("#chatFab").hidden=true;
     const first=!opened; opened=true;
